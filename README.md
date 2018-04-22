@@ -1,5 +1,5 @@
 # information_theory
-Encoding, decoding using Shannon-Fano coding
+Encoding, decoding using Shannon-Fano algorithm.
 
 Program:
 1) Finds all symbols (not only letters) in the text and computes their probabilities.
