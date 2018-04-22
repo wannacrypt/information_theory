@@ -99,11 +99,20 @@ public class Main
         System.out.println("[Debug] Text decoded. The result is: \n" + decode(encodedText, symbolList) + "\n");
 
         String encodedHuffmanText = encodeHuffman(encodedText);
-        // Print Huffman decoded text
-        System.out.println("[Debug] Text decoded using Huffman. The result is: \n" + encodedHuffmanText + "\n");
+        // Print Huffman encoded text
+        System.out.println("[Debug] Text encoded using Huffman coding. The result is: \n" + encodedHuffmanText + "\n");
 
+        String noisyText = addNoise(encodedHuffmanText);
         // Print Text with mistake
-        System.out.println("[Debug] Some mistake was added in every 7 bit. The result is: \n" + addNoise(encodedHuffmanText) + "\n");
+        System.out.println("[Debug] Some mistake was added in every 7 bit. The result is: \n" + noisyText + "\n");
+
+        // Print Huffman decoded text
+        String decodedHuffmanText = decodeHuffman(noisyText);
+        System.out.println("[Debug] Text decoded using Huffman coding. The result is: \n" + decodedHuffmanText + "\n");
+
+        // Restored Text
+        String restoredText = decode(decodedHuffmanText, symbolList);
+        System.out.println("[Debug] Text was restored after mistakes made. The result is: \n" + restoredText + "\n");
     }
 
     /**
@@ -255,7 +264,7 @@ public class Main
     }
 
     /**
-     * Encode using Huffman
+     * Encode using Huffman coding
      * @param word
      * @return
      */
@@ -302,7 +311,7 @@ public class Main
         int changePosition;
         StringBuilder str = new StringBuilder(word);
         for (int i = 0; i<word.length(); i = i+7){
-            changePosition = (int)(Math.random() * (i - i+7) + 1) + i;
+            changePosition = new Random().nextInt(7) + i;
 
             // if position is out of range, it will not make a mistake
             if (changePosition % 7 != 0 || changePosition == i){
@@ -314,8 +323,58 @@ public class Main
         return str.toString();
 
     }
-//    private static String decodeHuffman(String word)
-//    {
-//
-//    }
+
+    /**
+     * Decode text using Huffman coding
+     * @param word
+     * @return
+     */
+    private static String decodeHuffman(String word)
+    {
+        String decodedText = "";
+        byte[] keys = new byte[8];
+        //  i1  i2  i3  i4  r1  r2  r3
+        //  0   1   2   3   4   5   6
+        keys[0] = -1; // no error
+        keys[1] = -1; // r3
+        keys[2] = -1; // r2
+        keys[3] = 3; // i4
+        keys[4] = -1; // r1
+        keys[5] = 0; // i1
+        keys[6] = 2; // i3
+        keys[7] = 1; // i2
+
+        int size = word.length();
+        for (int i=0; i<size; i += 7){
+            byte s = 0;
+            s += (word.charAt(i+4) ^ word.charAt(i) ^ word.charAt(i+1) ^ word.charAt(i+2)) << 2;
+            s += (word.charAt(i+5) ^ word.charAt(i+1) ^ word.charAt(i+2) ^ word.charAt(i+3)) << 1;
+            s += (word.charAt(i+6) ^ word.charAt(i) ^ word.charAt(i+1) ^ word.charAt(i+3));
+
+            StringBuilder str = new StringBuilder(word.substring(i, i+4));
+            if (keys[s] != -1)
+            {
+                str.setCharAt(keys[s], Character.forDigit((str.charAt(keys[s]) ^ '1'), 10));
+            }
+            decodedText += str.toString();
+
+        }
+
+        //number of zeros needed to be deleted from the end
+        int x = word.length() % 4;
+
+        switch (x) {
+            case 1:
+                decodedText = new StringBuilder(decodedText).delete(decodedText.length()-3, decodedText.length()).toString();
+                break;
+            case 2:
+                decodedText = new StringBuilder(decodedText).delete(decodedText.length()-2, decodedText.length()).toString();
+                break;
+            case 3:
+                decodedText = new StringBuilder(decodedText).deleteCharAt(decodedText.length()).toString();
+                break;
+        }
+
+        return decodedText;
+    }
 }
